@@ -1,9 +1,9 @@
 const {CaseClause:cc, Query:qb, CaseClause, Column} = require('./lib/index');
 module.exports = qb;
 
-const y = new CaseClause();
+const y = qb.case();
 y.when('x','=','y', 2).when('u','z',4)
-const x = new qb().select(y).whereIn('2', ['1','2']).orWhereIn('k', ['1' ,'2' , qb.column('a.b')]).where(1,2).join('z','k', '=', y).from('k');
+const x = new qb().select('2').whereIn('2', ['1','2']).orWhereIn('k', ['1' ,'2' , qb.column('a.b')]).where(2,3).join('z','k', '=', y).from('k');
 
 console.log(x.toInstruction());
 
@@ -14,3 +14,6 @@ console.log(x.toInstruction());
   values: [ 2 ]
 }
 */
+
+
+
