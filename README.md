@@ -94,7 +94,7 @@ const query3 = new Duck()
 
 console.log('=== Rank Update ===');
 console.log(query3.toInstruction());
-```
+
 
 === User List ===
 {
@@ -111,7 +111,7 @@ console.log(query3.toInstruction());
   template: 'SELECT "players" FROM "rank" WHERE ("guild_id" = (CASE WHEN ("xp" = $1) THEN $2 WHEN ("xp" = $3) THEN $4 ELSE $5 END) AND "status" = $6)',
   values: [ 10000, 'Gold', 5000, 'Silver', 'Bronze', 'active' ]
 }
-
+```
 ---
 
 ## 💡 Why DuckBuilder?
