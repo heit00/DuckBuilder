@@ -1,5 +1,7 @@
 const Query = require('./lib/index');
-const Duck = Query;
-module.exports = { Duck };
+const Frag = Query;
+module.exports = { Frag };
+
+
 
 

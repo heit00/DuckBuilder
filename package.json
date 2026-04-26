@@ -1,7 +1,7 @@
 {
-  "name": "@heit00/duck",
-  "version": "1.0.0",
-  "description": "a primitive queryBuilder system",
+  "name": "@heit00/fragment",
+  "version": "1.1",
+  "description": "a primitive query builder system",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
