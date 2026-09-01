@@ -1,124 +1,171 @@
 # 🦆 DuckBuilder
-### *The Scalable Query Builder for PostgreSQL*
+### *The Modular Query Builder & ORM for PostgreSQL*
 
-**DuckBuilder** is a high-performance, scalable query builder specifically engineered for **PostgreSQL** drivers. It is designed to integrate seamlessly with standard industry drivers, most notably JavaScript's `pg` (node-postgres), providing a fluent and type-safe interface for database interactions.
-
----
-
-## 🏗️ Supported Lexical & Clause Structures
-The architecture of DuckBuilder mirrors the native logic of SQL, allowing for the construction of complex queries through a modular and readable syntax.
-
-### Available Clauses:
-* **Data Retrieval:** `SELECT`, `FROM`, `SUBQUERY`, `CTE`
-* **Data Removal:** `DELETE`
-* **Logic & Filtering:** `WHERE`, `HAVING`, `CASE`, `USING`
-* **Joins:** `JOIN` (Multiple types supported)
-* **Organization & Pagination:** `GROUP BY`, `ORDER BY`, `LIMIT`, `OFFSET`
+**DuckBuilder** is a high-performance, modular query builder and emerging ORM engineered specifically for **PostgreSQL** in modern JavaScript (Node.js). It integrates seamlessly with industry-standard drivers like `pg` (node-postgres), providing a fluent, parameterized, and secure interface for database operations.
 
 ---
 
-## 🛠️ Development Roadmap
-We are committed to making DuckBuilder the most comprehensive tool for PostgreSQL developers. The following features are currently being prioritized:
+## ✨ Key Features
 
-### 🔄 DML Operations (Under Development)
-* `UPDATE`: Advanced record modification support.
-* `INSERT`: Robust data insertion capabilities.
-
-### 🧪 Advanced Utilities (Coming Soon)
-* `RAW`: Support for raw SQL strings when direct control is required.
-* `FUNCTIONS`: Native support for PostgreSQL-specific functions and procedures.
+* 🛡️ **PostgreSQL-First & Safe by Default:** Native `$1, $2, ...` parameter binding via `TemplateCount` to prevent SQL injection, with automatic identifier quoting (`"table"."column"`).
+* 🌳 **AST & Symbol-Based Architecture:** Uses internal symbol-based typing (`Symbol.for`) and AST-like nodes for robust, composable queries.
+* ⚡ **Full DML & DQL Support:** Comprehensive `SELECT`, `INSERT` (with Upsert / `ON CONFLICT`), `UPDATE` (with `FROM`), and `DELETE` (with `USING`) builders.
+* 🧩 **Advanced SQL Constructs:** Native support for Common Table Expressions (`WITH`), Subqueries, `CASE ... WHEN`, `WHERE EXISTS`, `WHERE IN`, `BETWEEN`, Window/Aggregate functions, and Raw SQL fragments (`?` binding).
+* 🧬 **Extensible ORM Layer:** Clean, object-oriented schema definitions, extensible type casting system (`Type`, `defineType`), and structural relationship modeling (`Relation`).
 
 ---
 
-## 🦆 Usage Examples
+## 🏗️ Architecture & Modules
 
-DuckBuilder uses a fluent interface to build complex queries programmatically. All generated queries are automatically parameterized to ensure safety against SQL Injection.
-
-Here is a complete script demonstrating three real-world scenarios: basic queries, advanced joins with relationships, and complex conditional logic.
-
-```javascript
-const { Duck } = require('./lib/index');
-
-// =========================================================
-// 1. Basic Queries (Select, Where, In, Order By)
-// =========================================================
-// Fetching active users who are administrators or moderators
-const query1 = new Duck()
-    .select('id', 'username', 'email')
-    .from('users') 
-    .where('status', '=', 'active')
-    .whereIn('role', ['admin', 'moderator'])
-    .orderBy(Duck.order('substituto', 'asc'));
-
-console.log('=== User List ===');
-console.log(query1.toInstruction());
-
-
-// =========================================================
-// 2. Relationships and Advanced Filters (Joins & Between)
-// =========================================================
-// Building reports by joining tables and resolving columns automatically
-const query2 = new Duck()
-    .select(
-        Duck.column('o.id'),
-        Duck.column('c.name', 'cliente_nome'),
-        Duck.column('o.total')
-    )
-    .from('orders')
-    .join(Duck.table('customers', 'c'), join => {
-        join.on('o.customer_id', '=', Duck.column('c.id'))
-            .on('c.is_banned', '=', false); 
-    })
-    .whereBetween('o.created_at', ['2025-01-01', '2025-12-31'])
-    .where('o.total', '>', 500.00);
-
-console.log('=== Sales Report ===');
-console.log(query2.toInstruction());
-
-
-// =========================================================
-// 3. Complex Conditional Logic (Case When)
-// =========================================================
-// Building a rule engine using CASE WHEN to fetch dynamic data
-const rankCase = Duck.case()
-    .when(Duck.column('xp'), 10000, 'Gold')
-    .when(Duck.column('xp'), 5000, 'Silver')
-    .else('Bronze');
-
-// Injecting the rule into the Query
-const query3 = new Duck()
-    .select('players') 
-    .from('rank')
-    .where('guild_id', '=', rankCase)
-    .where('status', '=', 'active');
-
-console.log('=== Rank Update ===');
-console.log(query3.toInstruction());
-
-
-=== User List ===
-{
-  template: 'SELECT "id", "username", "email" FROM "users" WHERE ("status" = $1 AND "role" IN ($2, $3)) ORDER BY "substituto" ASC',
-  values: [ 'active', 'admin', 'moderator' ]
-}
-=== Sales Report ===
-{
-  template: 'SELECT "o"."id", "c"."name" AS "cliente_nome", "o"."total" FROM "orders" INNER JOIN "customers" ON ("o"."customer_id" = "c"."id" AND "c"."is_banned" = $1) WHERE ("o"."created_at" BETWEEN $2 AND $3 AND "o"."total" > $4)',
-  values: [ false, '2025-01-01', '2025-12-31', 500 ]
-}
-=== Rank Update ===
-{
-  template: 'SELECT "players" FROM "rank" WHERE ("guild_id" = (CASE WHEN ("xp" = $1) THEN $2 WHEN ("xp" = $3) THEN $4 ELSE $5 END) AND "status" = $6)',
-  values: [ 10000, 'Gold', 5000, 'Silver', 'Bronze', 'active' ]
-}
 ```
+duck/
+├── index.js                     # Facade entry point ({ Duck })
+├── lib/
+│   ├── index.js                 # Main Query class & static factories
+│   ├── queryBuilder/            # Core Query Builder engine
+│   │   ├── statements/          # Select, Insert, Update, Delete
+│   │   ├── clauseStructures/    # Where, Join, Case, With, OrderBy, OnConflict, etc.
+│   │   ├── lexicalStructures/   # Column, Table, Bind, Raw, Expression, Functions
+│   │   ├── grammar/             # QueryGrammar (SQL keywords & constants)
+│   │   ├── symbol-lockup/       # Internal AST Symbols
+│   │   └── util/                # TemplateCount, Types validator (T, Rule), Error
+│   └── orm/                     # Emerging ORM Layer
+│       └── schema/
+│           ├── elements/        # Column schema definitions, TableSchema, Relation
+│           └── typesDefinition/ # Base Type, defineType, Primitive/Default types
+└── .agents/                     # Project guidelines (CONTEXT.md) and task tracker (WORKS.md)
+```
+
 ---
 
-## 💡 Why DuckBuilder?
-Unlike generic query builders that attempt to abstract multiple database dialects, DuckBuilder is **PostgreSQL-first**. This focus ensures that specific driver optimizations and native PostgreSQL features are utilized without the overhead of unnecessary abstractions.
+## 🦆 Query Builder Examples
 
-> **Note:** Optimized for the `pg` driver to ensure secure parameter binding and prevention of SQL injection.
+### 1. SELECT with Joins, Aggregates and Filtering
+```javascript
+const { Duck } = require('./index');
+
+const query = new Duck()
+  .select(
+    Duck.column('u.id'),
+    Duck.column('u.username'),
+    Duck.count('p.id', 'total_posts')
+  )
+  .from(Duck.table('users', 'u'))
+  .leftJoin(Duck.table('posts', 'p'), join => {
+    join.on('p.user_id', '=', Duck.column('u.id'))
+        .on('p.is_deleted', '=', false);
+  })
+  .where('u.status', '=', 'active')
+  .whereIn('u.role', ['admin', 'editor'])
+  .groupBy(Duck.column('u.id'), Duck.column('u.username'))
+  .having(Duck.count('p.id'), '>', 5)
+  .orderBy(Duck.order('u.username', 'asc'));
+
+console.log(query.toInstruction());
+/*
+{
+  template: 'SELECT "u"."id", "u"."username", COUNT("p"."id") AS "total_posts" FROM "users" AS "u" LEFT JOIN "posts" AS "p" ON ("p"."user_id" = "u"."id" AND "p"."is_deleted" = $1) WHERE ("u"."status" = $2 AND "u"."role" IN ($3, $4)) GROUP BY "u"."id", "u"."username" HAVING (COUNT("p"."id") > $5) ORDER BY "u"."username" ASC',
+  values: [ false, 'active', 'admin', 'editor', 5 ]
+}
+*/
+```
 
 ---
 
-*Documentation generated for the DuckBuilder Project.*
+### 2. INSERT with Upsert (`ON CONFLICT`) & RETURNING
+```javascript
+const query = new Duck()
+  .insert('users')
+  .values([
+    { username: 'heit00', email: 'heit@example.com', role: 'admin' },
+    { username: 'duck', email: 'duck@example.com', role: 'user' }
+  ])
+  .onConflict('email')
+  .set('role', Duck.raw('EXCLUDED.role'))
+  .returning('id', 'username', 'email');
+
+console.log(query.toInstruction());
+/*
+{
+  template: 'INSERT INTO "users" ("username", "email", "role") VALUES ($1, $2, $3), ($4, $5, $6) ON CONFLICT ("email") DO UPDATE SET "role" = EXCLUDED.role RETURNING "id", "username", "email"',
+  values: [ 'heit00', 'heit@example.com', 'admin', 'duck', 'duck@example.com', 'user' ]
+}
+*/
+```
+
+---
+
+### 3. UPDATE with FROM Table & Complex Conditions
+```javascript
+const query = new Duck()
+  .update('products')
+  .set('price', Duck.raw('"products"."price" * ?', 1.10))
+  .from('categories')
+  .where('products.category_id', '=', Duck.column('categories.id'))
+  .where('categories.name', '=', 'Electronics')
+  .returning('products.id', 'products.price');
+
+console.log(query.toInstruction());
+/*
+{
+  template: 'UPDATE "products" SET "price" = "products"."price" * $1 FROM "categories" WHERE ("products"."category_id" = "categories"."id" AND "categories"."name" = $2) RETURNING "products"."id", "products"."price"',
+  values: [ 1.10, 'Electronics' ]
+}
+*/
+```
+
+---
+
+### 4. Common Table Expressions (WITH / CTE) & CASE Expressions
+```javascript
+// Define a CTE subquery
+const topUsers = new Duck()
+  .select('id')
+  .from('users')
+  .where('reputation', '>', 1000);
+
+// Conditional Case Expression
+const roleRank = Duck.case('user_tier')
+  .when(Duck.column('xp'), '>=', 10000, 'Master')
+  .when(Duck.column('xp'), '>=', 5000, 'Pro')
+  .else('Novice');
+
+const mainQuery = new Duck()
+  .with(topUsers, 'top_users')
+  .select('username', roleRank)
+  .from('top_users')
+  .join('profiles', 'profiles.user_id', '=', Duck.column('top_users.id'));
+
+console.log(mainQuery.toInstruction());
+```
+
+---
+
+## 🧬 ORM Layer (In Active Development)
+
+DuckBuilder's ORM layer builds directly on top of the QueryBuilder to provide type-safe schemas and domain entities:
+
+### Type System (`Type` & `defineType`)
+```javascript
+const { Type, defineType } = require('./lib/orm/schema/typesDefinition/type');
+
+class CustomUuidType extends Type {
+  constructor() {
+    super('uuid', 'UUID');
+  }
+  to(val) { return String(val).toLowerCase(); }
+  from(val) { return String(val); }
+}
+
+defineType(CustomUuidType);
+```
+
+### Schema & Relationships (`Relation`)
+* Fluent DDL definition via [`Column`](./lib/orm/schema/elements/column.js).
+* Topological relationship modeling (`HAS_ONE`, `HAS_MANY`, `BELONGS_TO`, `MANY_TO_MANY`) with customizable cascade behavior and selective column projections.
+
+---
+
+## 📄 License
+
+ISC © [heit00](https://github.com/heit00)
