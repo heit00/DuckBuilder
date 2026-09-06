@@ -31,7 +31,9 @@ duck/
 │   │   └── util/                # TemplateCount, Types validator (T, Rule), Error
 │   └── orm/                     # Emerging ORM Layer
 │       └── schema/
-│           ├── elements/        # Column schema definitions, TableSchema, Relation
+│           ├── concepts/        # Constraint, Reference, Relationship
+│           ├── elements/        # Column, TableSchema
+│           ├── grammar/         # SchemaGrammar (DDL keywords & constants)
 │           └── typesDefinition/ # Base Type, defineType, Primitive/Default types
 └── .agents/                     # Project guidelines (CONTEXT.md) and task tracker (WORKS.md)
 ```
@@ -160,9 +162,10 @@ class CustomUuidType extends Type {
 defineType(CustomUuidType);
 ```
 
-### Schema & Relationships (`Relation`)
-* Fluent DDL definition via [`Column`](./lib/orm/schema/elements/column.js).
-* Topological relationship modeling (`HAS_ONE`, `HAS_MANY`, `BELONGS_TO`, `MANY_TO_MANY`) with customizable cascade behavior and selective column projections.
+### Schema, Constraints & Relationships
+* **Schema & Columns:** Fluent column definition via [`Column`](./lib/orm/schema/elements/column.js) and table schema management via [`TableSchema`](./lib/orm/schema/elements/table.js).
+* **Constraints:** Structural constraints via [`Constraint`](./lib/orm/schema/concepts/constraint.js) (`PRIMARY KEY`, `FOREIGN KEY`, `UNIQUE`, `CHECK`, `NOT NULL`) with automated metadata extraction.
+* **Relationships:** Modeling domain relationships via [`Relationship`](./lib/orm/schema/concepts/reference.js) (`1-1`, `1-N`, `N-1`, `N-N`) and [`Reference`](./lib/orm/schema/concepts/reference.js) with composite foreign key mappings (`{ origin_col: target_col }`).
 
 ---
 

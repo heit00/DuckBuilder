@@ -19,13 +19,14 @@ Arquivo de controle de tarefas do projeto. Todas as novas funcionalidades, melho
 - [ ] Implementação de novos tipos primitivos (`Boolean`, `BigInt`, `Timestamp`, `Decimal`, `UUID`).
 - [ ] Implementação da função `getType(name)` para recuperação de tipos pelo Schema.
 
-### Gramática e Relações
-- [ ] Criação do `SchemaGrammar` (centralização de termos DDL, tipos de integridade referencial `CASCADE`, `RESTRICT`, etc.).
-- [ ] Criação da classe `Relation` (metadados estruturais, chaves estrangeiras, cardinalidades `HAS_ONE`, `HAS_MANY`, `BELONGS_TO`, `MANY_TO_MANY`, `columns` e integridade referencial).
+### Gramática, Restrições e Relações
+- [x] Criação do `SchemaGrammar` (`lib/orm/schema/grammar/schemaGrammar.js`) com centralização de termos DDL, ações (`CASCADE`, `RESTRICT`) e tipos de constraints.
+- [x] Criação da classe `Constraint` (`lib/orm/schema/concepts/constraint.js`) com suporte a `PRIMARY KEY`, `FOREIGN KEY`, `UNIQUE`, `CHECK`, `NOT NULL`, prefixos padronizados e integridade referencial.
+- [x] Modelagem de relações com `Relationship` e `Reference` (`lib/orm/schema/concepts/reference.js`), com suporte a cardinalidades (`1-1`, `1-N`, `N-1`, `N-N`) e referências compostas `{ colOrigem: colDestino }`.
 
 ### Definição de Schema & DDL
-- [ ] Evolução da classe `Column` (`lib/orm/schema/elements/column.js`) com geração de DDL SQL (`toSQL()`).
-- [ ] Criação da classe `TableSchema` / `Table` (definição de tabela, coleção de colunas, chaves primárias, constraints e índices).
+- [/] Evolução da classe `Column` (`lib/orm/schema/elements/column.js`) com especificação de atributos (tipo, tamanho, precisão, nulabilidade, defaults); pendente geração de DDL SQL (`toSQL()`).
+- [/] Criação da classe `TableSchema` (`lib/orm/schema/elements/table.js`) com coleções estruturadas em `Map` (`columns`, `constraints`, `relations`), sincronização em `#updateMetaData` e métodos de relações (`manyToOneRelation`, `manyToManyRelation`).
 
 ### Entidades e Hydration
 - [ ] Criação da classe base `Model` / `Entity` (Active Record / Data Mapper básico).
