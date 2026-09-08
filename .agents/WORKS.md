@@ -19,13 +19,18 @@ Arquivo de controle de tarefas do projeto. Todas as novas funcionalidades, melho
 - [ ] Implementação de novos tipos primitivos (`Boolean`, `BigInt`, `Timestamp`, `Decimal`, `UUID`).
 - [ ] Implementação da função `getType(name)` para recuperação de tipos pelo Schema.
 
-### Gramática e Relações
-- [ ] Criação do `SchemaGrammar` (centralização de termos DDL, tipos de integridade referencial `CASCADE`, `RESTRICT`, etc.).
-- [ ] Criação da classe `Relation` (metadados estruturais, chaves estrangeiras, cardinalidades `HAS_ONE`, `HAS_MANY`, `BELONGS_TO`, `MANY_TO_MANY`, `columns` e integridade referencial).
+### Gramática, Restrições e Relações
+- [x] Criação do `SchemaGrammar` (`lib/orm/schema/grammar/schemaGrammar.js`) com centralização de termos DDL, ações (`CASCADE`, `RESTRICT`) e tipos de constraints.
+- [x] Criação da classe `Constraint` (`lib/orm/schema/concepts/constraint.js`) com suporte a `PRIMARY KEY`, `FOREIGN KEY`, `UNIQUE`, `CHECK`, `NOT NULL`, prefixos padronizados (`pk`, `fk`, `un`, `nu`, `ch`) e integridade referencial.
+- [x] Modelagem de relações com `Relationship` e `Reference` (`lib/orm/schema/concepts/reference.js`), com suporte a cardinalidades (`1-1`, `1-N`, `N-1`, `N-N`), prefixo `fk` e mapeamento composto `{ colOrigem: colDestino }`.
 
 ### Definição de Schema & DDL
-- [ ] Evolução da classe `Column` (`lib/orm/schema/elements/column.js`) com geração de DDL SQL (`toSQL()`).
-- [ ] Criação da classe `TableSchema` / `Table` (definição de tabela, coleção de colunas, chaves primárias, constraints e índices).
+- [x] Identificação e verificação de nós de schema via símbolos (`lib/orm/schema/symbol-lockup/symbols.js`) com `ELEMENT_VALUE_TYPE`, `isTable` e `isColumn`.
+- [x] Registro e catálogo de tabelas em memória (`lib/orm/schema/internal/tablesRegister.js`) com funções `registerTable` e `getTables`, validação de instâncias e prevenção de duplicatas (`schema.tabela`).
+- [x] Estrutura da classe `TableSchema` (`lib/orm/schema/elements/table.js`) com coleções em `Map` (`columns`, `constraints`, `relations`), metadados automáticos em `#updateMetaData` com suporte a schema e métodos de relacionamento (`manyToOneRelation`, `manyToManyRelation`).
+- [x] Função de relacionamento N-N (`lib/orm/schema/internal/manyToManyRelation.js`) gerando tabela intermediária/pivot automaticamente com inferência de tipos das colunas e amarração bidirecional N-1.
+- [/] Evolução da classe `Column` (`lib/orm/schema/elements/column.js`) com especificação fluente de atributos (tipo, tamanho, precisão, nulabilidade, defaults); pendente integração completa e geração de DDL SQL (`toSQL()`).
+- [ ] Compilação DDL: Geração de SQL DDL (`toSQL()` / `SchemaCompiler`) para `Column`, `Constraint` e `TableSchema` (`CREATE TABLE`, `ALTER TABLE`, etc.).
 
 ### Entidades e Hydration
 - [ ] Criação da classe base `Model` / `Entity` (Active Record / Data Mapper básico).

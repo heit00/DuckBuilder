@@ -11,7 +11,7 @@
 * 🌳 **AST & Symbol-Based Architecture:** Uses internal symbol-based typing (`Symbol.for`) and AST-like nodes for robust, composable queries.
 * ⚡ **Full DML & DQL Support:** Comprehensive `SELECT`, `INSERT` (with Upsert / `ON CONFLICT`), `UPDATE` (with `FROM`), and `DELETE` (with `USING`) builders.
 * 🧩 **Advanced SQL Constructs:** Native support for Common Table Expressions (`WITH`), Subqueries, `CASE ... WHEN`, `WHERE EXISTS`, `WHERE IN`, `BETWEEN`, Window/Aggregate functions, and Raw SQL fragments (`?` binding).
-* 🧬 **Extensible ORM Layer:** Clean, object-oriented schema definitions, extensible type casting system (`Type`, `defineType`), and structural relationship modeling (`Relation`).
+* 🧬 **Extensible ORM Layer:** Clean object-oriented schema definitions (`TableSchema`, `Column`), extensible type casting system (`Type`, `defineType`), structural relationship modeling (`Relationship`, `Reference`, `manyToManyRelation`), and centralized table cataloging (`registerTable`).
 
 ---
 
@@ -31,7 +31,11 @@ duck/
 │   │   └── util/                # TemplateCount, Types validator (T, Rule), Error
 │   └── orm/                     # Emerging ORM Layer
 │       └── schema/
-│           ├── elements/        # Column schema definitions, TableSchema, Relation
+│           ├── concepts/        # Constraint, Reference, Relationship
+│           ├── elements/        # Column, TableSchema
+│           ├── grammar/         # SchemaGrammar (DDL keywords & constants)
+│           ├── internal/        # tablesRegister, manyToManyRelation (pivot tables)
+│           ├── symbol-lockup/   # Schema AST Symbols (isTable, isColumn)
 │           └── typesDefinition/ # Base Type, defineType, Primitive/Default types
 └── .agents/                     # Project guidelines (CONTEXT.md) and task tracker (WORKS.md)
 ```
@@ -160,9 +164,30 @@ class CustomUuidType extends Type {
 defineType(CustomUuidType);
 ```
 
-### Schema & Relationships (`Relation`)
-* Fluent DDL definition via [`Column`](./lib/orm/schema/elements/column.js).
-* Topological relationship modeling (`HAS_ONE`, `HAS_MANY`, `BELONGS_TO`, `MANY_TO_MANY`) with customizable cascade behavior and selective column projections.
+### Schema, Constraints & Relationships
+```javascript
+const { TableSchema } = require('./lib/orm/schema/elements/table');
+const { Column } = require('./lib/orm/schema/elements/column');
+const { registerTable } = require('./lib/orm/schema/internal/tablesRegister');
+const { createManyToManyRelation } = require('./lib/orm/schema/internal/manyToManyRelation');
+
+// Define table schema with fluent columns and constraints
+const users = new TableSchema('users');
+users.defineColumns({
+  id: Column.id(),
+  username: new Column().name('username').type('varchar').unique(true),
+  email: new Column().name('email').type('varchar').nullable(false)
+});
+
+// Register table schema in the centralized catalog
+registerTable(users);
+```
+
+* **Schema & Columns:** Fluent column definition via [`Column`](./lib/orm/schema/elements/column.js) and table schema management via [`TableSchema`](./lib/orm/schema/elements/table.js).
+* **Constraints:** Structural constraints via [`Constraint`](./lib/orm/schema/concepts/constraint.js) (`PRIMARY KEY`, `FOREIGN KEY`, `UNIQUE`, `CHECK`, `NOT NULL`) with automatic naming conventions (`pk_`, `fk_`, `un_`, `nu_`) and automated metadata extraction.
+* **Relationships:** Modeling domain relationships via [`Relationship`](./lib/orm/schema/concepts/reference.js) (`1-1`, `1-N`, `N-1`, `N-N`) and composite foreign key mappings (`{ origin_col: target_col }`).
+* **Many-to-Many & Intermediate Tables:** Built-in helper [`createManyToManyRelation`](./lib/orm/schema/internal/manyToManyRelation.js) to automatically infer types, generate pivot table schemas, and wire up bidirectional relationships.
+* **Table Registry:** Centralized in-memory catalog via [`registerTable`](./lib/orm/schema/internal/tablesRegister.js) preventing duplicate table definitions per schema.
 
 ---
 
