@@ -30,10 +30,10 @@ O **DuckBuilder** (`@heit00/fragment`) é uma iniciativa individual de estudo e 
 
 ## 📋 3. Gerenciamento do `WORKS.md`
 
-O arquivo [`WORKS.md`](file:///C:/Users/User/Documents/duck/WORKS.md) na raiz do projeto é o quadro oficial de tarefas do DuckBuilder.
+O arquivo [`WORKS.md`](file:///C:/Users/User/Documents/duck/.agents/WORKS.md) na pasta `.agents` é o quadro oficial de tarefas do DuckBuilder.
 
 ### 📌 Diretrizes para Agentes sobre o `WORKS.md`:
-* **Sincronização:** Sempre que uma etapa de desenvolvimento for concluída ou decidida em conjunto com o usuário, o agente deve marcar a respectiva tarefa como `[x]` no [`WORKS.md`](file:///C:/Users/User/Documents/duck/WORKS.md).
+* **Sincronização:** Sempre que uma etapa de desenvolvimento for concluída ou decidida em conjunto com o usuário, o agente deve marcar a respectiva tarefa como `[x]` no [`WORKS.md`](file:///C:/Users/User/Documents/duck/.agents/WORKS.md).
 * **Novas Demandas:** Novas funcionalidades, débitos técnicos ou refatorações identificadas durante as conversas devem ser registradas como tarefas pendentes `[ ]` na seção correspondente.
 * **Manter a Estrutura:** Respeitar a legenda:
   - `[x]` Concluído
@@ -59,12 +59,24 @@ Reutilizar as classes de erro nativas de forma semântica:
 * `Error`: Conflitos de estado ou duplicações.
 
 ### C. Eliminação de "Magic Strings" (Gramática e Constantes)
-* Centralizar palavras-chave SQL, ações DDL e integridade referencial em classes de gramática/constantes (ex: `QueryGrammar`, `SchemaGrammar`, `Relation.actions`), permitindo validação imediata e aceitação de strings case-insensitive.
+* Centralizar palavras-chave SQL, ações DDL e integridade referencial em classes de gramática/constantes (ex: `QueryGrammar`, `SchemaGrammar`, `Constraint.TYPES`, `Constraint.PREFIX`, `Relationship.TYPES`, `Relationship.PREFIX`), permitindo validação imediata e aceitação de strings case-insensitive.
 
 ### D. PostgreSQL-First & Prevenção a SQL Injection
 * Todos os literais devem ser parametrizados (`$1, $2, ...`) via `TemplateCount` e `Bind`.
 * Identificadores de tabelas e colunas devem receber escape com aspas duplas (`"tabela"."coluna"`).
 
 ### E. Separação de Responsabilidades: Relações vs Escopos
-* **`Relation`:** Puramente estrutural e topológica (chaves `foreignKey`, `localKey`, cardinalidades `HAS_ONE`, `HAS_MANY`, `BELONGS_TO`, `MANY_TO_MANY`, `columns`, `pivotTable`, `onDelete`, `onUpdate`).
+* **`Relationship` & `Reference`:** Puramente estrutural e topológica (cardinalidades `1-1`, `1-N`, `N-1`, `N-N`, prefixo `fk`, mapeamento `{ [colOrigem]: colDestino }` e tabelas intermediárias pivot para `N-N` via `createManyToManyRelation`).
 * **`Scope`:** Comportamentos e filtros de consulta (`.where()`, `.orderBy()`) pertencem à camada de `Model` / `TableSchema` / `Query`.
+
+### F. Convenções de Nomenclatura e Metadados de Schema
+* **Prefixos de Constraints e Relações:**
+  * `pk_` para `PRIMARY KEY` (`Constraint.PREFIX.primary`).
+  * `fk_` para `FOREIGN KEY` / Relações (`Relationship.PREFIX.foreign`).
+  * `un_` para `UNIQUE` (`Constraint.PREFIX.unique`).
+  * `nu_` para `NOT NULL` (`Constraint.PREFIX.nullable`).
+  * `ch_` para `CHECK` (`Constraint.PREFIX.check`).
+* **Identificação de Objetos do Schema:**
+  * Validação interna com Símbolos (`ELEMENT_VALUE_TYPE`, `isTable()`, `isColumn()`).
+  * Nomenclatura qualificada com schema: `${schemaName}_${tableName}_...`.
+  * Registro e catálogo em memória via `registerTable()` / `getTables()` em `tablesRegister.js`.
