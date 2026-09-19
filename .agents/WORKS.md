@@ -17,7 +17,7 @@ Arquivo de controle de tarefas do projeto. Todas as novas funcionalidades, melho
 - [x] Estrutura base de tipos para testes do ORM (`Type`, `defineType`, `TYPES` registry).
 - [x] Implementação dos primeiros tipos padrão (`Integer`, `VarChar`, `JsonType` em `default.js`).
 - [ ] Implementação de novos tipos primitivos (`Boolean`, `BigInt`, `Timestamp`, `Decimal`, `UUID`).
-- [ ] Implementação da função `getType(name)` para recuperação de tipos pelo Schema.
+- [x] Implementação da função `getType(name)` para recuperação de tipos pelo Schema.
 
 ### Gramática, Restrições e Relações
 - [x] Criação do `SchemaGrammar` (`lib/orm/schema/grammar/schemaGrammar.js`) com centralização de termos DDL, ações (`CASCADE`, `RESTRICT`) e tipos de constraints.
@@ -50,6 +50,21 @@ Arquivo de controle de tarefas do projeto. Todas as novas funcionalidades, melho
 ---
 
 ## 🧪 Testes & Qualidade
-- [ ] Configuração de suite de testes unitários automatizados (ex: `node:test`).
-- [ ] Testes de compilação de SQL para o QueryBuilder.
-- [ ] Testes de serialização/deserialização do sistema de tipos do ORM.
+- [x] Configuração de suite de testes unitários automatizados (ex: `node:test`).
+- [x] Testes de compilação de SQL para o QueryBuilder (`test/queryBuilder.test.js`).
+- [x] Testes de serialização/deserialização do sistema de tipos do ORM (`test/orm.test.js`).
+
+---
+
+## 🐛 Débitos Técnicos & Ajustes Identificados
+
+### QueryBuilder
+- [ ] **Símbolos e Subqueries (`symbols.js` / `Select` / `Query`):** `isQuery()` valida `[QUERY_VALUE_TYPE] === QT.query`, mas instâncias de `Select` possuem apenas `[QUERY_SPECIFIC_VALUE_TYPE] = QT.select`. Isso impede a passagem direta de instâncias de `Select` para `with()`, `whereExists()` e subqueries em `from()`. Necessário alinhar a tipagem por símbolo ou implementar a herança de uma classe base comum `Query`.
+- [ ] **Assinatura de `Duck.coalesce` (`lib/index.js`):** A factory estática `coalesce(args, alias)` interpreta o segundo argumento como alias, quebrando chamadas convencionais de múltiplos argumentos como `Duck.coalesce('a', 'b')`. Ajustar para aceitar múltiplos argumentos variádicos (`...args`).
+
+### ORM (Schema)
+- [ ] **Correção em `TableSchema.prototype.manyToOneRelation` (`lib/orm/schema/elements/table.js`):**
+  1. `Constraint.PREFIX.foreign` está indefinido na classe `Constraint` (o prefixo `fk` foi declarado apenas em `Relationship.PREFIX.foreign`).
+  2. A checagem `if (this.constraints.has(cName))` ocorre *após* a inserção `this.constraints.set(cName, constraint)`, fazendo com que qualquer invocação lance `Error: constraint ... already registered`. Mover a checagem para antes da inserção.
+- [ ] **Cascata em `TableSchema.prototype.manyToManyRelation` (`lib/orm/schema/internal/manyToManyRelation.js`):** Atualmente falha devido ao erro no `manyToOneRelation` da tabela pivot.
+- [ ] **Assinatura de `TableSchema.prototype.defineColumns`:** Atualmente aceita apenas lista de instâncias ou array `(col1, col2)` / `([col1, col2])`. Avaliar suporte a dicionário chave-valor `{ colName: columnInstance }`.

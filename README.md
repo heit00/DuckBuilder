@@ -1,7 +1,7 @@
 # 🦆 DuckBuilder
 ### *The Modular Query Builder & ORM for PostgreSQL*
 
-**DuckBuilder** is a high-performance, modular query builder and emerging ORM engineered specifically for **PostgreSQL** in modern JavaScript (Node.js). It integrates seamlessly with industry-standard drivers like `pg` (node-postgres), providing a fluent, parameterized, and secure interface for database operations.
+**DuckBuilder** is a high-performance, modular query builder and emerging ORM engineered specifically for **PostgreSQL** in modern JavaScript (Node.js). It provides a fluent, parameterized, and secure interface for database operations with zero external dependencies.
 
 ---
 
@@ -11,17 +11,18 @@
 * 🌳 **AST & Symbol-Based Architecture:** Uses internal symbol-based typing (`Symbol.for`) and AST-like nodes for robust, composable queries.
 * ⚡ **Full DML & DQL Support:** Comprehensive `SELECT`, `INSERT` (with Upsert / `ON CONFLICT`), `UPDATE` (with `FROM`), and `DELETE` (with `USING`) builders.
 * 🧩 **Advanced SQL Constructs:** Native support for Common Table Expressions (`WITH`), Subqueries, `CASE ... WHEN`, `WHERE EXISTS`, `WHERE IN`, `BETWEEN`, Window/Aggregate functions, and Raw SQL fragments (`?` binding).
-* 🧬 **Extensible ORM Layer:** Clean object-oriented schema definitions (`TableSchema`, `Column`), extensible type casting system (`Type`, `defineType`), structural relationship modeling (`Relationship`, `Reference`, `manyToManyRelation`), and centralized table cataloging (`registerTable`).
+* 🧬 **Extensible ORM Layer:** Clean object-oriented schema definitions (`TableSchema`, `Column`), extensible type casting system (`Type`, `defineType`), structural relationship modeling (`Relationship`, `Reference`), and centralized table cataloging (`registerTable`).
+* 🧪 **Native Test Suite:** Fully covered by automated unit tests using Node.js's native test runner (`node:test`).
 
 ---
 
 ## 🏗️ Architecture & Modules
 
 ```
-duck/
+DuckBuilder/
 ├── index.js                     # Facade entry point ({ Duck })
 ├── lib/
-│   ├── index.js                 # Main Query class & static factories
+│   ├── index.js                 # Main Query (Duck) class & static factories
 │   ├── queryBuilder/            # Core Query Builder engine
 │   │   ├── statements/          # Select, Insert, Update, Delete
 │   │   ├── clauseStructures/    # Where, Join, Case, With, OrderBy, OnConflict, etc.
@@ -36,7 +37,10 @@ duck/
 │           ├── grammar/         # SchemaGrammar (DDL keywords & constants)
 │           ├── internal/        # tablesRegister, manyToManyRelation (pivot tables)
 │           ├── symbol-lockup/   # Schema AST Symbols (isTable, isColumn)
-│           └── typesDefinition/ # Base Type, defineType, Primitive/Default types
+│           └── typesDefinition/ # Base Type, defineType, getType, Default types
+├── test/                        # Automated unit test suites (node:test)
+│   ├── queryBuilder.test.js     # Query builder statement & compilation tests
+│   └── orm.test.js              # Schema, Types, and Table catalog tests
 └── .agents/                     # Project guidelines (CONTEXT.md) and task tracker (WORKS.md)
 ```
 
@@ -44,11 +48,14 @@ duck/
 
 ## 🦆 Query Builder Examples
 
+> [!NOTE]
+> Queries are instantiated directly through the static factory methods on `Duck` (e.g., `Duck.select()`, `Duck.insert()`, `Duck.update()`, `Duck.delete()`).
+
 ### 1. SELECT with Joins, Aggregates and Filtering
 ```javascript
 const { Duck } = require('./index');
 
-const query = new Duck()
+const query = Duck
   .select(
     Duck.column('u.id'),
     Duck.column('u.username'),
@@ -78,7 +85,7 @@ console.log(query.toInstruction());
 
 ### 2. INSERT with Upsert (`ON CONFLICT`) & RETURNING
 ```javascript
-const query = new Duck()
+const query = Duck
   .insert('users')
   .values([
     { username: 'heit00', email: 'heit@example.com', role: 'admin' },
@@ -101,7 +108,7 @@ console.log(query.toInstruction());
 
 ### 3. UPDATE with FROM Table & Complex Conditions
 ```javascript
-const query = new Duck()
+const query = Duck
   .update('products')
   .set('price', Duck.raw('"products"."price" * ?', 1.10))
   .from('categories')
@@ -120,25 +127,41 @@ console.log(query.toInstruction());
 
 ---
 
-### 4. Common Table Expressions (WITH / CTE) & CASE Expressions
+### 4. DELETE with USING & RETURNING
 ```javascript
-// Define a CTE subquery
-const topUsers = new Duck()
-  .select('id')
+const query = Duck
+  .delete()
   .from('users')
-  .where('reputation', '>', 1000);
+  .using('banned_users')
+  .where('users.id', '=', Duck.column('banned_users.user_id'))
+  .returning('*');
 
+console.log(query.toInstruction());
+/*
+{
+  template: 'DELETE FROM "users" USING "banned_users" WHERE ("users"."id" = "banned_users"."user_id") RETURNING *',
+  values: []
+}
+*/
+```
+
+---
+
+### 5. Common Table Expressions (WITH / CTE) & CASE Expressions
+```javascript
 // Conditional Case Expression
 const roleRank = Duck.case('user_tier')
   .when(Duck.column('xp'), '>=', 10000, 'Master')
   .when(Duck.column('xp'), '>=', 5000, 'Pro')
   .else('Novice');
 
-const mainQuery = new Duck()
-  .with(topUsers, 'top_users')
+// CTE with parameterized Raw query
+const topUsers = Duck.raw('(SELECT id FROM users WHERE reputation > ?)', 1000);
+
+const mainQuery = Duck
   .select('username', roleRank)
   .from('top_users')
-  .join('profiles', 'profiles.user_id', '=', Duck.column('top_users.id'));
+  .with(topUsers, 'top_users');
 
 console.log(mainQuery.toInstruction());
 ```
@@ -149,9 +172,9 @@ console.log(mainQuery.toInstruction());
 
 DuckBuilder's ORM layer builds directly on top of the QueryBuilder to provide type-safe schemas and domain entities:
 
-### Type System (`Type` & `defineType`)
+### Type System (`Type`, `defineType`, `getType`)
 ```javascript
-const { Type, defineType } = require('./lib/orm/schema/typesDefinition/type');
+const { Type, defineType, getType } = require('./lib/orm/schema/typesDefinition/type');
 
 class CustomUuidType extends Type {
   constructor() {
@@ -162,32 +185,59 @@ class CustomUuidType extends Type {
 }
 
 defineType(CustomUuidType);
+
+const RetrievedType = getType('CustomUuidType');
+const typeInstance = new RetrievedType();
+console.log(typeInstance.to('ABC-123')); // 'abc-123'
 ```
 
 ### Schema, Constraints & Relationships
 ```javascript
 const { TableSchema } = require('./lib/orm/schema/elements/table');
 const { Column } = require('./lib/orm/schema/elements/column');
-const { registerTable } = require('./lib/orm/schema/internal/tablesRegister');
-const { createManyToManyRelation } = require('./lib/orm/schema/internal/manyToManyRelation');
+const { registerTable, getTables } = require('./lib/orm/schema/internal/tablesRegister');
 
 // Define table schema with fluent columns and constraints
 const users = new TableSchema('users');
-users.defineColumns({
-  id: Column.id(),
-  username: new Column().name('username').type('varchar').unique(true),
-  email: new Column().name('email').type('varchar').nullable(false)
-});
+users.defineColumns(
+  Column.id('id').type('int'),
+  new Column('username').type('varchar').unique(true),
+  new Column('email').type('varchar').nullable(false)
+);
 
 // Register table schema in the centralized catalog
 registerTable(users);
+
+// Define dependent table with foreign key relationship
+const posts = new TableSchema('posts');
+posts.defineColumns(
+  Column.id('id').type('int'),
+  new Column('user_id').type('int').references(users, 'id'),
+  new Column('title').type('varchar')
+);
+registerTable(posts);
 ```
 
 * **Schema & Columns:** Fluent column definition via [`Column`](./lib/orm/schema/elements/column.js) and table schema management via [`TableSchema`](./lib/orm/schema/elements/table.js).
 * **Constraints:** Structural constraints via [`Constraint`](./lib/orm/schema/concepts/constraint.js) (`PRIMARY KEY`, `FOREIGN KEY`, `UNIQUE`, `CHECK`, `NOT NULL`) with automatic naming conventions (`pk_`, `fk_`, `un_`, `nu_`) and automated metadata extraction.
-* **Relationships:** Modeling domain relationships via [`Relationship`](./lib/orm/schema/concepts/reference.js) (`1-1`, `1-N`, `N-1`, `N-N`) and composite foreign key mappings (`{ origin_col: target_col }`).
-* **Many-to-Many & Intermediate Tables:** Built-in helper [`createManyToManyRelation`](./lib/orm/schema/internal/manyToManyRelation.js) to automatically infer types, generate pivot table schemas, and wire up bidirectional relationships.
+* **Relationships:** Modeling domain relationships via [`Relationship`](./lib/orm/schema/concepts/reference.js) and foreign key references via [`Column.prototype.references`](./lib/orm/schema/elements/column.js).
 * **Table Registry:** Centralized in-memory catalog via [`registerTable`](./lib/orm/schema/internal/tablesRegister.js) preventing duplicate table definitions per schema.
+
+---
+
+## 🧪 Test Suite
+
+The project includes an automated unit test suite built with Node.js's native test runner (`node:test`):
+
+```bash
+npm test
+```
+
+Tests cover:
+* Full SQL generation for `SELECT`, `INSERT`, `UPDATE`, and `DELETE`.
+* Aggregates, expressions, conditionals (`CASE`), joins, and upserts.
+* ORM type registration, serialization (`to`), and deserialization (`from`).
+* Table schema metadata, constraints (`PRIMARY KEY`, `NOT NULL`, `UNIQUE`, `FOREIGN KEY`), and catalog registration.
 
 ---
 

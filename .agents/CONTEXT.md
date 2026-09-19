@@ -30,10 +30,10 @@ O **DuckBuilder** (`@heit00/fragment`) é uma iniciativa individual de estudo e 
 
 ## 📋 3. Gerenciamento do `WORKS.md`
 
-O arquivo [`WORKS.md`](file:///C:/Users/User/Documents/duck/.agents/WORKS.md) na pasta `.agents` é o quadro oficial de tarefas do DuckBuilder.
+O arquivo [`WORKS.md`](file:///C:/Users/ra2457009/Desktop/garbage/DuckBuilder/.agents/WORKS.md) na pasta `.agents` é o quadro oficial de tarefas do DuckBuilder.
 
 ### 📌 Diretrizes para Agentes sobre o `WORKS.md`:
-* **Sincronização:** Sempre que uma etapa de desenvolvimento for concluída ou decidida em conjunto com o usuário, o agente deve marcar a respectiva tarefa como `[x]` no [`WORKS.md`](file:///C:/Users/User/Documents/duck/.agents/WORKS.md).
+* **Sincronização:** Sempre que uma etapa de desenvolvimento for concluída ou decidida em conjunto com o usuário, o agente deve marcar a respectiva tarefa como `[x]` no [`WORKS.md`](file:///C:/Users/ra2457009/Desktop/garbage/DuckBuilder/.agents/WORKS.md).
 * **Novas Demandas:** Novas funcionalidades, débitos técnicos ou refatorações identificadas durante as conversas devem ser registradas como tarefas pendentes `[ ]` na seção correspondente.
 * **Manter a Estrutura:** Respeitar a legenda:
   - `[x]` Concluído

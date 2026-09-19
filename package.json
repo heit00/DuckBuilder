@@ -4,7 +4,7 @@
   "description": "a primitive query builder system",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test"
   },
   "author": "heit00",
   "license": "ISC"
