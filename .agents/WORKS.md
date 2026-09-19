@@ -63,7 +63,7 @@ Arquivo de controle de tarefas do projeto. Todas as novas funcionalidades, melho
 - [ ] **Assinatura de `Duck.coalesce` (`lib/index.js`):** A factory estática `coalesce(args, alias)` interpreta o segundo argumento como alias, quebrando chamadas convencionais de múltiplos argumentos como `Duck.coalesce('a', 'b')`. Ajustar para aceitar múltiplos argumentos variádicos (`...args`).
 
 ### ORM (Schema)
-- [ ] **Correção em `TableSchema.prototype.manyToOneRelation` (`lib/orm/schema/elements/table.js`):**
+- [x] **Correção em `TableSchema.prototype.manyToOneRelation` (`lib/orm/schema/elements/table.js`):**
   1. `Constraint.PREFIX.foreign` está indefinido na classe `Constraint` (o prefixo `fk` foi declarado apenas em `Relationship.PREFIX.foreign`).
   2. A checagem `if (this.constraints.has(cName))` ocorre *após* a inserção `this.constraints.set(cName, constraint)`, fazendo com que qualquer invocação lance `Error: constraint ... already registered`. Mover a checagem para antes da inserção.
 - [ ] **Cascata em `TableSchema.prototype.manyToManyRelation` (`lib/orm/schema/internal/manyToManyRelation.js`):** Atualmente falha devido ao erro no `manyToOneRelation` da tabela pivot.
