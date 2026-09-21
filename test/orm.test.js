@@ -9,7 +9,7 @@ const { TableSchema } = require('../lib/orm/schema/elements/table');
 const { Constraint } = require('../lib/orm/schema/concepts/constraint');
 const { Relationship } = require('../lib/orm/schema/concepts/reference');
 const { registerTable, getTables } = require('../lib/orm/schema/internal/tablesRegister');
-const { isColumn, isTable } = require('../lib/orm/schema/symbol-lockup/symbols');
+const { isColumn, isTable, isType } = require('../lib/orm/global-symbol-lockup/symbols');
 const { SchemaGrammar } = require('../lib/orm/schema/grammar/schemaGrammar');
 
 describe('🦆 DuckBuilder — Suíte de Testes do ORM (node:test)', () => {
@@ -23,6 +23,23 @@ describe('🦆 DuckBuilder — Suíte de Testes do ORM (node:test)', () => {
       assert.ok(IntType, 'Integer deve estar registrado');
       assert.ok(VarCharType, 'VarChar deve estar registrado');
       assert.ok(Json, 'JsonType deve estar registrado');
+    });
+
+    it('deve armazenar args na instância, suportar static params e ser identificado por isType()', () => {
+      const VarCharType = getType('VarChar');
+      const IntType = getType('Integer');
+
+      const vc255 = new VarCharType(255);
+      assert.deepStrictEqual(vc255.args, [255]);
+      assert.strictEqual(vc255.length, 255);
+      assert.deepStrictEqual(VarCharType.params, ['length']);
+      assert.strictEqual(isType(vc255), true);
+
+      const intInst = new IntType();
+      assert.deepStrictEqual(intInst.args, []);
+      assert.deepStrictEqual(IntType.params, []);
+      assert.strictEqual(isType(intInst), true);
+      assert.strictEqual(isType({}), false);
     });
 
     it('deve lançar ReferenceError ao buscar um tipo inexistente', () => {

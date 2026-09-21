@@ -14,7 +14,7 @@ Arquivo de controle de tarefas do projeto. Todas as novas funcionalidades, melho
 ## 🛠️ Camada ORM (`lib/orm`)
 
 ### Sistema de Tipos (Types Definition)
-- [x] Estrutura base de tipos para testes do ORM (`Type`, `defineType`, `TYPES` registry).
+- [x] Estrutura base de tipos para testes do ORM (`Type`, `defineType`, `TYPES` registry), com suporte a modificadores SQL (`args`), metadados (`static params`) e identificação AST (`isType`).
 - [x] Implementação dos primeiros tipos padrão (`Integer`, `VarChar`, `JsonType` em `default.js`).
 - [ ] Implementação de novos tipos primitivos (`Boolean`, `BigInt`, `Timestamp`, `Decimal`, `UUID`).
 - [x] Implementação da função `getType(name)` para recuperação de tipos pelo Schema.
@@ -25,7 +25,7 @@ Arquivo de controle de tarefas do projeto. Todas as novas funcionalidades, melho
 - [x] Modelagem de relações com `Relationship` e `Reference` (`lib/orm/schema/concepts/reference.js`), com suporte a cardinalidades (`1-1`, `1-N`, `N-1`, `N-N`), prefixo `fk` e mapeamento composto `{ colOrigem: colDestino }`.
 
 ### Definição de Schema & DDL
-- [x] Identificação e verificação de nós de schema via símbolos (`lib/orm/schema/symbol-lockup/symbols.js`) com `ELEMENT_VALUE_TYPE`, `isTable` e `isColumn`.
+- [x] Identificação e verificação de nós de schema via símbolos (`lib/orm/global-symbol-lockup/symbols.js`) com `ELEMENT_VALUE_TYPE`, `isTable` e `isColumn`.
 - [x] Registro e catálogo de tabelas em memória (`lib/orm/schema/internal/tablesRegister.js`) com funções `registerTable` e `getTables`, validação de instâncias e prevenção de duplicatas (`schema.tabela`).
 - [x] Estrutura da classe `TableSchema` (`lib/orm/schema/elements/table.js`) com coleções em `Map` (`columns`, `constraints`, `relations`), metadados automáticos em `#updateMetaData` com suporte a schema e métodos de relacionamento (`manyToOneRelation`, `manyToManyRelation`).
 - [x] Função de relacionamento N-N (`lib/orm/schema/internal/manyToManyRelation.js`) gerando tabela intermediária/pivot automaticamente com inferência de tipos das colunas e amarração bidirecional N-1.
