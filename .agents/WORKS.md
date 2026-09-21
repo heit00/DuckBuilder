@@ -30,7 +30,7 @@ Arquivo de controle de tarefas do projeto. Todas as novas funcionalidades, melho
 - [x] Estrutura da classe `TableSchema` (`lib/orm/schema/elements/table.js`) com coleções em `Map` (`columns`, `constraints`, `relations`), metadados automáticos em `#updateMetaData` com suporte a schema e métodos de relacionamento (`manyToOneRelation`, `manyToManyRelation`).
 - [x] Função de relacionamento N-N (`lib/orm/schema/internal/manyToManyRelation.js`) gerando tabela intermediária/pivot automaticamente com inferência de tipos das colunas e amarração bidirecional N-1.
 - [/] Evolução da classe `Column` (`lib/orm/schema/elements/column.js`) com especificação fluente de atributos (tipo, tamanho, precisão, nulabilidade, defaults); pendente integração completa e geração de DDL SQL (`toSQL()`).
-- [ ] Compilação DDL: Geração de SQL DDL (`toSQL()` / `SchemaCompiler`) para `Column`, `Constraint` e `TableSchema` (`CREATE TABLE`, `ALTER TABLE`, etc.).
+- [/] Compilação DDL: Geração de SQL DDL (`toSQL()` / `SchemaCompiler`) para `Column`, `Constraint` e `TableSchema` (`CREATE TABLE`, `ALTER TABLE`, etc.); gramática base DDL iniciada (`CompilerGrammar`).
 
 ### Entidades e Hydration
 - [ ] Criação da classe base `Model` / `Entity` (Active Record / Data Mapper básico).
