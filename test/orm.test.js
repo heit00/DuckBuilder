@@ -32,11 +32,15 @@ describe('🦆 DuckBuilder — Suíte de Testes do ORM (node:test)', () => {
       const vc255 = new VarCharType(255);
       assert.deepStrictEqual(vc255.args, [255]);
       assert.strictEqual(vc255.length, 255);
+      assert.strictEqual(vc255.baseType, SchemaGrammar.BaseTypes.varchar);
+      assert.strictEqual(vc255.radical, SchemaGrammar.BaseTypes.varchar);
       assert.deepStrictEqual(VarCharType.params, ['length']);
       assert.strictEqual(isType(vc255), true);
 
       const intInst = new IntType();
       assert.deepStrictEqual(intInst.args, []);
+      assert.strictEqual(intInst.baseType, SchemaGrammar.BaseTypes.integer);
+      assert.strictEqual(intInst.radical, SchemaGrammar.BaseTypes.integer);
       assert.deepStrictEqual(IntType.params, []);
       assert.strictEqual(isType(intInst), true);
       assert.strictEqual(isType({}), false);
@@ -121,12 +125,15 @@ describe('🦆 DuckBuilder — Suíte de Testes do ORM (node:test)', () => {
       it('deve permitir registrar um novo tipo derivado de Type', () => {
         class CustomUUID extends Type {
           constructor() {
-            super('uuid', 'UUID_RADICAL');
+            super('uuid', 'UUID_BASE_TYPE');
           }
         }
 
         defineType(CustomUUID);
         assert.strictEqual(getType('CustomUUID'), CustomUUID);
+        const uuidInst = new CustomUUID();
+        assert.strictEqual(uuidInst.baseType, 'UUID_BASE_TYPE');
+        assert.strictEqual(uuidInst.radical, 'UUID_BASE_TYPE');
       });
 
       it('deve rejeitar classes que não estendam Type', () => {
