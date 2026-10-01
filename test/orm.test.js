@@ -9,8 +9,10 @@ const { TableSchema } = require('../lib/orm/schema/elements/table');
 const { Constraint } = require('../lib/orm/schema/concepts/constraint');
 const { Relationship } = require('../lib/orm/schema/concepts/reference');
 const { registerTable, getTables } = require('../lib/orm/schema/internal/tablesRegister');
-const { isColumn, isTable, isType } = require('../lib/orm/global-symbol-lockup/symbols');
+const { isColumn, isTable, isType, ST } = require('../lib/orm/global-symbol-lockup/symbols');
 const { SchemaGrammar } = require('../lib/orm/schema/grammar/schemaGrammar');
+const { CreatorVisitorPostgresSQL } = require('../lib/orm/schemaCompiler/postgresSQL/visitors/create/creatorVisitor');
+const { CompilerGrammar } = require('../lib/orm/schemaCompiler/postgresSQL/grammar/compileGrammar');
 
 describe('🦆 DuckBuilder — Suíte de Testes do ORM (node:test)', () => {
 
@@ -289,6 +291,45 @@ describe('🦆 DuckBuilder — Suíte de Testes do ORM (node:test)', () => {
         () => registerTable(duplicatePosts),
         { message: 'table posts already registered.' }
       );
+    });
+  });
+
+  describe('6. Compilação DDL de Tipos (CompilerGrammar & CreatorVisitorPostgresSQL)', () => {
+    const visitor = new CreatorVisitorPostgresSQL();
+    const IntClass = getType('Integer');
+    const VarCharClass = getType('VarChar');
+    const JsonClass = getType('JsonType');
+
+    it('deve compilar Integer para INTEGER e SERIAL quando autoIncrement for true', () => {
+      const colNormal = new Column('idade').type(new IntClass());
+      const colAuto = Column.id('id').type(new IntClass());
+
+      assert.strictEqual(visitor[ST.type](colNormal.type(), colNormal), 'INTEGER');
+      assert.strictEqual(visitor[ST.type](colAuto.type(), colAuto), 'SERIAL');
+    });
+
+    it('deve compilar VarChar com length especificado ou valor padrão 255', () => {
+      const vc100 = new VarCharClass(100);
+      const vcDefault = new VarCharClass();
+
+      assert.strictEqual(visitor[ST.type](vc100), 'VARCHAR(100)');
+      assert.strictEqual(visitor[ST.type](vcDefault), 'VARCHAR(255)');
+    });
+
+    it('deve compilar JsonType para JSONB no dialeto PostgreSQL', () => {
+      const json = new JsonClass();
+      assert.strictEqual(visitor[ST.type](json), 'JSONB');
+    });
+
+    it('deve aplicar fallback com name em maiúsculo para tipos customizados sem mapper', () => {
+      const customType = { name: 'uuid', radical: 'CUSTOM_UUID', args: [] };
+      assert.strictEqual(visitor[ST.type](customType), 'UUID');
+    });
+
+    it('deve suportar definição de tipo na Column passando string do tipo com argumentos', () => {
+      const col = new Column('nome').type('VarChar', 120);
+      assert.ok(isType(col.type()));
+      assert.strictEqual(visitor[ST.type](col.type(), col), 'VARCHAR(120)');
     });
   });
 
