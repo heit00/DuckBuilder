@@ -21,21 +21,15 @@ Arquivo de controle de tarefas do projeto. Todas as novas funcionalidades, melho
 
 ### Gramática, Restrições e Relações
 - [x] Criação do `SchemaGrammar` (`lib/orm/schema/grammar/schemaGrammar.js`) com centralização de termos DDL, ações (`CASCADE`, `RESTRICT`), `BaseTypes` e tipos de constraints.
-- [x] Criação da classe `Constraint` (`lib/orm/schema/concepts/constraint.js`) com suporte a `PRIMARY KEY`, `FOREIGN KEY`, `UNIQUE`, `CHECK`, `NOT NULL`, prefixos padronizados (`pk`, `fk`, `un`, `nu`, `ch`) e integridade referencial.
+- [x] Criação da classe `Constraint` (`lib/orm/schema/concepts/constraint.js`) com suporte a `PRIMARY KEY`, `FOREIGN KEY`, `UNIQUE`, `CHECK`, `NOT NULL`, identificação AST via `[ELEMENT_VALUE_TYPE]`, unificação de `Constraint.TYPES` com `SchemaGrammar.constraints.types` e integridade referencial.
 - [x] Modelagem de relações com `Relationship` e `Reference` (`lib/orm/schema/concepts/reference.js`), com suporte a cardinalidades (`1-1`, `1-N`, `N-1`, `N-N`), prefixo `fk` e mapeamento composto `{ colOrigem: colDestino }`.
 
 ### Definição de Schema & DDL
-- [x] Identificação e verificação de nós de schema via símbolos (`lib/orm/global-symbol-lockup/symbols.js`) com `ELEMENT_VALUE_TYPE`, `isTable` e `isColumn`.
+- [x] Identificação e verificação de nós de schema via símbolos (`lib/orm/global-symbol-lockup/symbols.js`) com `ELEMENT_VALUE_TYPE`, `isTable`, `isColumn` e `isConstraint`.
 - [x] Registro e catálogo de tabelas em memória (`lib/orm/schema/internal/tablesRegister.js`) com funções `registerTable` e `getTables`, validação de instâncias e prevenção de duplicatas (`schema.tabela`).
 - [x] Estrutura da classe `TableSchema` (`lib/orm/schema/elements/table.js`) com coleções em `Map` (`columns`, `constraints`, `relations`), metadados automáticos em `#updateMetaData` com suporte a schema e métodos de relacionamento (`manyToOneRelation`, `manyToManyRelation`).
-- [x] Função de relacionamento N-N (`lib/orm/schema/internal/manyToManyRelation.js`) gerando tabela intermediária/pivot automaticamente com inferência de tipos das colunas e amarração bidirecional N-1.
-<<<<<<< HEAD
 - [x] Evolução da classe `Column` (`lib/orm/schema/elements/column.js`) com especificação fluente de atributos (tipo, tamanho, precisão, nulabilidade, defaults) e sobrecarga de tipos por instância ou string (`getType`).
-- [/] Compilação DDL: Geração de SQL DDL (`toSQL()` / `SchemaCompiler`) para `Column`, `Constraint` e `TableSchema` (`CREATE TABLE`, etc.); gramática base DDL iniciada (`CompilerGrammar`), `typeMap` contextual implementado e visitor `[ST.type]` integrado em `CreatorVisitorPostgresSQL`.
-=======
-- [/] Evolução da classe `Column` (`lib/orm/schema/elements/column.js`) com especificação fluente de atributos (tipo, tamanho, precisão, nulabilidade, defaults); pendente integração completa e geração de DDL SQL (`toSQL()`).
-- [/] Compilação DDL: Geração de SQL DDL (`toSQL()` / `SchemaCompiler`) para `Column`, `Constraint` e `TableSchema` (`CREATE TABLE`, `ALTER TABLE`, etc.); gramática base DDL com mapeamento de tipos (`CompilerGrammar.typesMapper`) e visitors (`CreatorVisitorPostgresSQL`).
->>>>>>> b08a04c85c1bfaba8ca60d88f2658318b48a7db0
+- [/] Compilação DDL: Geração de SQL DDL (`toSQL()` / `SchemaCompiler`) para `Column`, `Constraint` e `TableSchema` (`CREATE TABLE`, etc.); gramática base DDL (`CompilerGrammar`) com `typesMapper`, `constraintsMapper` e `actionsMapper`, e visitor em [`CreatorVisitorPostgresSQL`](file:///C:/Users/User/Documents/duck/lib/orm/schemaCompiler/postgresSQL/visitors/creatorVisitor.js).
 
 ### Entidades e Hydration
 - [ ] Criação da classe base `Model` / `Entity` (Active Record / Data Mapper básico).

@@ -31,13 +31,17 @@ DuckBuilder/
 │   │   ├── symbol-lockup/       # Internal AST Symbols
 │   │   └── util/                # TemplateCount, Types validator (T, Rule), Error
 │   └── orm/                     # Emerging ORM Layer
-│       └── schema/
-│           ├── concepts/        # Constraint, Reference, Relationship
-│           ├── elements/        # Column, TableSchema
-│           ├── grammar/         # SchemaGrammar (DDL keywords & constants)
-│           ├── internal/        # tablesRegister, manyToManyRelation (pivot tables)
-│           ├── symbol-lockup/   # Schema AST Symbols (isTable, isColumn)
-│           └── typesDefinition/ # Base Type, defineType, getType, Default types
+│       ├── global-symbol-lockup/# Schema AST Symbols (isTable, isColumn, isType, ST)
+│       ├── schema/              # Schema definition concepts, elements & types
+│       │   ├── concepts/        # Constraint, Reference, Relationship
+│       │   ├── elements/        # Column, TableSchema
+│       │   ├── grammar/         # SchemaGrammar (DDL keywords & constants)
+│       │   ├── internal/        # tablesRegister, manyToManyRelation (pivot tables)
+│       │   └── typesDefinition/ # Base Type, defineType, getType, Default types
+│       └── schemaCompiler/      # DDL Compilers (PostgreSQL engine)
+│           └── postgresSQL/
+│               ├── grammar/     # CompilerGrammar (DDL tokens & typesMapper)
+│               └── visitors/    # DDL AST Visitors (create/creatorVisitor)
 ├── test/                        # Automated unit test suites (node:test)
 │   ├── queryBuilder.test.js     # Query builder statement & compilation tests
 │   └── orm.test.js              # Schema, Types, and Table catalog tests

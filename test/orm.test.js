@@ -11,7 +11,7 @@ const { Relationship } = require('../lib/orm/schema/concepts/reference');
 const { registerTable, getTables } = require('../lib/orm/schema/internal/tablesRegister');
 const { isColumn, isTable, isType, ST } = require('../lib/orm/global-symbol-lockup/symbols');
 const { SchemaGrammar } = require('../lib/orm/schema/grammar/schemaGrammar');
-const { CreatorVisitorPostgresSQL } = require('../lib/orm/schemaCompiler/postgresSQL/visitors/create/creatorVisitor');
+const { CreatorVisitorPostgresSQL } = require('../lib/orm/schemaCompiler/postgresSQL/visitors/creatorVisitor');
 const { CompilerGrammar } = require('../lib/orm/schemaCompiler/postgresSQL/grammar/compileGrammar');
 
 describe('🦆 DuckBuilder — Suíte de Testes do ORM (node:test)', () => {
@@ -192,11 +192,11 @@ describe('🦆 DuckBuilder — Suíte de Testes do ORM (node:test)', () => {
       assert.strictEqual(Constraint.PREFIX.check, 'ch');
     });
 
-    it('deve validar os tipos padronizados de constraints', () => {
-      assert.strictEqual(Constraint.TYPES.primaryKey, 'PRIMARY KEY');
-      assert.strictEqual(Constraint.TYPES.foreignKey, 'FOREIGN KEY');
-      assert.strictEqual(Constraint.TYPES.unique, 'UNIQUE');
-      assert.strictEqual(Constraint.TYPES.check, 'CHECK');
+    it('deve validar os tipos padronizados de constraints unificados com SchemaGrammar', () => {
+      assert.strictEqual(Constraint.TYPES.primaryKey, SchemaGrammar.constraints.types.primaryKey);
+      assert.strictEqual(Constraint.TYPES.foreignKey, SchemaGrammar.constraints.types.foreignKey);
+      assert.strictEqual(Constraint.TYPES.unique, SchemaGrammar.constraints.types.unique);
+      assert.strictEqual(Constraint.TYPES.check, SchemaGrammar.constraints.types.check);
     });
 
     it('deve construir uma Constraint com nome prefixado e colunas', () => {
