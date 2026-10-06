@@ -12,6 +12,8 @@ const { registerTable, getTables } = require('../lib/orm/schema/internal/tablesR
 const { isColumn, isTable, isType, ST } = require('../lib/orm/global-symbol-lockup/symbols');
 const { SchemaGrammar } = require('../lib/orm/schema/grammar/schemaGrammar');
 const { CreatorVisitorPostgresSQL } = require('../lib/orm/schemaCompiler/postgresSQL/visitors/creatorVisitor');
+const { DefinitionVisitorPostgresSQL, qualifyTableName, qualifyTable } = require('../lib/orm/schemaCompiler/postgresSQL/visitors/definitionVisitor');
+const { AlterVisitorPostgresSQL } = require('../lib/orm/schemaCompiler/postgresSQL/visitors/alterVisitor');
 const { CompilerGrammar } = require('../lib/orm/schemaCompiler/postgresSQL/grammar/compileGrammar');
 
 describe('🦆 DuckBuilder — Suíte de Testes do ORM (node:test)', () => {
@@ -340,4 +342,97 @@ describe('🦆 DuckBuilder — Suíte de Testes do ORM (node:test)', () => {
     });
   });
 
+  describe('7. Compilação de Definições DDL (DefinitionVisitorPostgresSQL)', () => {
+    const defVisitor = new DefinitionVisitorPostgresSQL();
+    const IntClass = getType('Integer');
+
+    it('deve compilar definição de coluna com tipo e default', () => {
+      const col = new Column('idade').type(new IntClass()).default(18);
+      assert.strictEqual(defVisitor[ST.column](col), '"idade" INTEGER DEFAULT 18');
+    });
+
+    it('deve compilar constraint de PRIMARY KEY com colunas formatadas', () => {
+      const pk = new Constraint().name('usuarios_id', Constraint.PREFIX.primary).type(Constraint.TYPES.primaryKey).columns('id');
+      assert.strictEqual(defVisitor[ST.constraint](pk), 'CONSTRAINT "pk_usuarios_id" PRIMARY KEY ("id")');
+    });
+
+    it('deve compilar constraint de UNIQUE e CHECK', () => {
+      const un = new Constraint().name('usuarios_email', Constraint.PREFIX.unique).type(Constraint.TYPES.unique).columns('email');
+      assert.strictEqual(defVisitor[ST.constraint](un), 'CONSTRAINT "un_usuarios_email" UNIQUE ("email")');
+
+      const ch = new Constraint().name('check_idade', Constraint.PREFIX.check).type(Constraint.TYPES.check).expression('idade >= 18');
+      assert.strictEqual(defVisitor[ST.constraint](ch), 'CONSTRAINT "ch_check_idade" CHECK (idade >= 18)');
+    });
+
+    it('deve lançar TypeError se argumentos não forem nós válidos de AST', () => {
+      assert.throws(() => defVisitor[ST.column]({}), { name: 'TypeError' });
+      assert.throws(() => defVisitor[ST.constraint]({}), { name: 'TypeError' });
+      assert.throws(() => defVisitor[ST.type]('invalido'), { name: 'TypeError' });
+    });
+  });
+
+  describe('8. Qualificação de Tabelas (qualifyTableName / qualifyTable)', () => {
+    const creator = new CreatorVisitorPostgresSQL();
+
+    it('deve qualificar strings simples com aspas', () => {
+      assert.strictEqual(qualifyTableName('usuarios'), '"usuarios"');
+      assert.strictEqual(creator.qualifyTable('usuarios'), '"usuarios"');
+    });
+
+    it('deve separar schema e tabela em strings com ponto e aplicar aspas duplas', () => {
+      assert.strictEqual(qualifyTableName('public.usuarios'), '"public"."usuarios"');
+      assert.strictEqual(creator.qualifyTableName('vendas.pedidos'), '"vendas"."pedidos"');
+    });
+
+    it('deve qualificar instâncias de TableSchema com schema padrão e customizado', () => {
+      const publicTable = new TableSchema('produtos');
+      assert.strictEqual(creator.qualifyTableName(publicTable), '"public"."produtos"');
+
+      const customTable = new TableSchema('pedidos', 'vendas');
+      assert.strictEqual(qualifyTableName(customTable), '"vendas"."pedidos"');
+    });
+
+    it('deve lançar TypeError para entradas nulas ou vazias', () => {
+      assert.throws(() => qualifyTableName(null), { name: 'TypeError' });
+      assert.throws(() => qualifyTableName(''), { name: 'TypeError' });
+    });
+  });
+
+  describe('9. Compilação de Alterações DDL (AlterVisitorPostgresSQL) & Gramática de Separadores', () => {
+    const alterVisitor = new AlterVisitorPostgresSQL();
+    const table = new TableSchema('usuarios', 'public');
+    const IntClass = getType('Integer');
+
+    it('deve validar constantes de separadores e ponto e vírgula na gramática (CG)', () => {
+      assert.strictEqual(CompilerGrammar.tableDDL.separators.left, '(');
+      assert.strictEqual(CompilerGrammar.tableDDL.separators.right, ')');
+      assert.strictEqual(CompilerGrammar.tableDLL.separators.left, '(');
+      assert.strictEqual(CompilerGrammar.tableDLL.separators.right, ')');
+      assert.strictEqual(CompilerGrammar.terminator, ';');
+      assert.strictEqual(CompilerGrammar.punctuation.semicolon, ';');
+    });
+
+    it('deve gerar instrução ALTER TABLE ADD CONSTRAINT usando separadores e terminator', () => {
+      const pk = new Constraint().name('usuarios_id', Constraint.PREFIX.primary).type(Constraint.TYPES.primaryKey).columns('id');
+      const sql = alterVisitor[ST.constraint](pk, { table });
+      assert.strictEqual(sql, 'ALTER TABLE "public"."usuarios" ADD CONSTRAINT "pk_usuarios_id" PRIMARY KEY ("id");');
+    });
+
+    it('deve gerar instrução ALTER TABLE DROP CONSTRAINT com CASCADE opcional', () => {
+      const pk = new Constraint().name('usuarios_id', Constraint.PREFIX.primary).type(Constraint.TYPES.primaryKey).columns('id');
+      const sql = alterVisitor[ST.constraint](pk, { table, action: CompilerGrammar.statements.drop, cascade: true });
+      assert.strictEqual(sql, 'ALTER TABLE "public"."usuarios" DROP CONSTRAINT "pk_usuarios_id" CASCADE;');
+    });
+
+    it('deve gerar instrução ALTER TABLE ADD COLUMN e DROP COLUMN com terminator', () => {
+      const col = new Column('idade').type(new IntClass()).default(18);
+      const addSQL = alterVisitor[ST.column](col, { table });
+      assert.strictEqual(addSQL, 'ALTER TABLE "public"."usuarios" ADD COLUMN "idade" INTEGER DEFAULT 18;');
+
+      const dropSQL = alterVisitor[ST.column](col, { table, action: CompilerGrammar.statements.drop });
+      assert.strictEqual(dropSQL, 'ALTER TABLE "public"."usuarios" DROP COLUMN "idade";');
+    });
+  });
+
 });
+
