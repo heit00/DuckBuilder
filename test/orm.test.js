@@ -157,24 +157,24 @@ describe('🦆 DuckBuilder — Suíte de Testes do ORM (node:test)', () => {
   });
 
   describe('2. Definição de Colunas (Column) & Identificação AST', () => {
-    it('deve criar uma coluna com encadeamento fluente de atributos', () => {
+    it('deve criar uma coluna com encadeamento fluente de atributos e getters nativos', () => {
       const IntClass = getType('Integer');
       const col = new Column('idade')
-        .type(new IntClass())
-        .nullable(false)
-        .default(18);
+        .setType(new IntClass())
+        .setNullable(false)
+        .setDefault(18);
 
-      assert.strictEqual(col.name(), 'idade');
-      assert.ok(col.type() instanceof IntClass);
-      assert.strictEqual(col.nullable(), false);
-      assert.strictEqual(col.default(), 18);
+      assert.strictEqual(col.name, 'idade');
+      assert.ok(col.type instanceof IntClass);
+      assert.strictEqual(col.nullable, false);
+      assert.strictEqual(col.default, 18);
     });
 
     it('deve criar chave primária através da factory Column.id()', () => {
       const idCol = Column.id('user_id');
-      assert.strictEqual(idCol.name(), 'user_id');
-      assert.strictEqual(idCol.primary(), true);
-      assert.strictEqual(idCol.autoIncrement(), true);
+      assert.strictEqual(idCol.name, 'user_id');
+      assert.strictEqual(idCol.primary, true);
+      assert.strictEqual(idCol.autoIncrement, true);
     });
 
     it('deve ser reconhecido corretamente por isColumn() via Símbolos AST', () => {
@@ -201,15 +201,15 @@ describe('🦆 DuckBuilder — Suíte de Testes do ORM (node:test)', () => {
       assert.strictEqual(Constraint.TYPES.check, SchemaGrammar.constraints.types.check);
     });
 
-    it('deve construir uma Constraint com nome prefixado e colunas', () => {
+    it('deve construir uma Constraint com nome prefixado e colunas via set* e getters', () => {
       const c = new Constraint()
-        .name('users_email', Constraint.PREFIX.unique)
-        .type(Constraint.TYPES.unique)
-        .columns('email');
+        .setName('users_email', Constraint.PREFIX.unique)
+        .setType(Constraint.TYPES.unique)
+        .setColumns('email');
 
-      assert.strictEqual(c.name(), 'un_users_email');
-      assert.strictEqual(c.type(), Constraint.TYPES.unique);
-      assert.deepStrictEqual(c.columns(), ['email']);
+      assert.strictEqual(c.name, 'un_users_email');
+      assert.strictEqual(c.type, Constraint.TYPES.unique);
+      assert.deepStrictEqual(c.columns, ['email']);
     });
 
     it('deve validar cardinalidades de Relationship', () => {
@@ -264,10 +264,10 @@ describe('🦆 DuckBuilder — Suíte de Testes do ORM (node:test)', () => {
     it('deve criar relacionamento N-N (manyToManyRelation) gerando tabela pivot automaticamente', () => {
       const IntClass = getType('Integer');
       const autores = new TableSchema('autores');
-      autores.defineColumns(Column.id('id').type(new IntClass()));
+      autores.defineColumns(Column.id('id').setType(new IntClass()));
 
       const livros = new TableSchema('livros');
-      livros.defineColumns(Column.id('id').type(new IntClass()));
+      livros.defineColumns(Column.id('id').setType(new IntClass()));
 
       autores.manyToManyRelation('autores_livros', livros, { autor_id: 'id' }, { livro_id: 'id' });
 
@@ -310,11 +310,11 @@ describe('🦆 DuckBuilder — Suíte de Testes do ORM (node:test)', () => {
     const JsonClass = getType('JsonType');
 
     it('deve compilar Integer para INTEGER e SERIAL quando autoIncrement for true', () => {
-      const colNormal = new Column('idade').type(new IntClass());
-      const colAuto = Column.id('id').type(new IntClass());
+      const colNormal = new Column('idade').setType(new IntClass());
+      const colAuto = Column.id('id').setType(new IntClass());
 
-      assert.strictEqual(visitor[ST.type](colNormal.type(), colNormal), 'INTEGER');
-      assert.strictEqual(visitor[ST.type](colAuto.type(), colAuto), 'SERIAL');
+      assert.strictEqual(visitor[ST.type](colNormal.type, colNormal), 'INTEGER');
+      assert.strictEqual(visitor[ST.type](colAuto.type, colAuto), 'SERIAL');
     });
 
     it('deve compilar VarChar com length especificado ou valor padrão 255', () => {
@@ -336,9 +336,9 @@ describe('🦆 DuckBuilder — Suíte de Testes do ORM (node:test)', () => {
     });
 
     it('deve suportar definição de tipo na Column passando string do tipo com argumentos', () => {
-      const col = new Column('nome').type('VarChar', 120);
-      assert.ok(isType(col.type()));
-      assert.strictEqual(visitor[ST.type](col.type(), col), 'VARCHAR(120)');
+      const col = new Column('nome').setType('VarChar', 120);
+      assert.ok(isType(col.type));
+      assert.strictEqual(visitor[ST.type](col.type, col), 'VARCHAR(120)');
     });
   });
 
@@ -347,20 +347,20 @@ describe('🦆 DuckBuilder — Suíte de Testes do ORM (node:test)', () => {
     const IntClass = getType('Integer');
 
     it('deve compilar definição de coluna com tipo e default', () => {
-      const col = new Column('idade').type(new IntClass()).default(18);
+      const col = new Column('idade').setType(new IntClass()).setDefault(18);
       assert.strictEqual(defVisitor[ST.column](col), '"idade" INTEGER DEFAULT 18');
     });
 
     it('deve compilar constraint de PRIMARY KEY com colunas formatadas', () => {
-      const pk = new Constraint().name('usuarios_id', Constraint.PREFIX.primary).type(Constraint.TYPES.primaryKey).columns('id');
+      const pk = new Constraint().setName('usuarios_id', Constraint.PREFIX.primary).setType(Constraint.TYPES.primaryKey).setColumns('id');
       assert.strictEqual(defVisitor[ST.constraint](pk), 'CONSTRAINT "pk_usuarios_id" PRIMARY KEY ("id")');
     });
 
     it('deve compilar constraint de UNIQUE e CHECK', () => {
-      const un = new Constraint().name('usuarios_email', Constraint.PREFIX.unique).type(Constraint.TYPES.unique).columns('email');
+      const un = new Constraint().setName('usuarios_email', Constraint.PREFIX.unique).setType(Constraint.TYPES.unique).setColumns('email');
       assert.strictEqual(defVisitor[ST.constraint](un), 'CONSTRAINT "un_usuarios_email" UNIQUE ("email")');
 
-      const ch = new Constraint().name('check_idade', Constraint.PREFIX.check).type(Constraint.TYPES.check).expression('idade >= 18');
+      const ch = new Constraint().setName('check_idade', Constraint.PREFIX.check).setType(Constraint.TYPES.check).setExpression('idade >= 18');
       assert.strictEqual(defVisitor[ST.constraint](ch), 'CONSTRAINT "ch_check_idade" CHECK (idade >= 18)');
     });
 
@@ -413,19 +413,19 @@ describe('🦆 DuckBuilder — Suíte de Testes do ORM (node:test)', () => {
     });
 
     it('deve gerar instrução ALTER TABLE ADD CONSTRAINT usando separadores e terminator', () => {
-      const pk = new Constraint().name('usuarios_id', Constraint.PREFIX.primary).type(Constraint.TYPES.primaryKey).columns('id');
+      const pk = new Constraint().setName('usuarios_id', Constraint.PREFIX.primary).setType(Constraint.TYPES.primaryKey).setColumns('id');
       const sql = alterVisitor[ST.constraint](pk, { table });
       assert.strictEqual(sql, 'ALTER TABLE "public"."usuarios" ADD CONSTRAINT "pk_usuarios_id" PRIMARY KEY ("id");');
     });
 
     it('deve gerar instrução ALTER TABLE DROP CONSTRAINT com CASCADE opcional', () => {
-      const pk = new Constraint().name('usuarios_id', Constraint.PREFIX.primary).type(Constraint.TYPES.primaryKey).columns('id');
+      const pk = new Constraint().setName('usuarios_id', Constraint.PREFIX.primary).setType(Constraint.TYPES.primaryKey).setColumns('id');
       const sql = alterVisitor[ST.constraint](pk, { table, action: CompilerGrammar.statements.drop, cascade: true });
       assert.strictEqual(sql, 'ALTER TABLE "public"."usuarios" DROP CONSTRAINT "pk_usuarios_id" CASCADE;');
     });
 
     it('deve gerar instrução ALTER TABLE ADD COLUMN e DROP COLUMN com terminator', () => {
-      const col = new Column('idade').type(new IntClass()).default(18);
+      const col = new Column('idade').setType(new IntClass()).setDefault(18);
       const addSQL = alterVisitor[ST.column](col, { table });
       assert.strictEqual(addSQL, 'ALTER TABLE "public"."usuarios" ADD COLUMN "idade" INTEGER DEFAULT 18;');
 
